@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "max_rounds": 6,
+  "total_seconds": 7200,
+  "round_seconds": 1200,
+  "experiment_seconds": 600,
+  "max_no_progress": 2,
+  "max_revisions": 2
+}

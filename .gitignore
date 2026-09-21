@@ -1,0 +1,23 @@
+# Independent repositories, not submodules.
+/repos/*
+!/repos/.gitkeep
+/paper/*
+!/paper/.gitkeep
+/refrepo/*
+!/refrepo/.gitkeep
+/ref/*/repo/
+/ref/**/*.pdf
+# Local execution and machine state.
+/.runtime/
+/workspace.local.json
+/local/
+/data/
+/logs/
+.worktrees/
+**/.env
+**/.env.*
+!**/.env.example
+__pycache__/
+*.py[cod]
+.DS_Store
+# task/, research/, spec/ and ref metadata are intentionally tracked.

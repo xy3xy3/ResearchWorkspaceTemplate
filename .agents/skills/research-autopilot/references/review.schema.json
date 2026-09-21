@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "proceed",
+        "revise",
+        "blocked"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "next_action": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "status",
+    "summary",
+    "next_action"
+  ]
+}

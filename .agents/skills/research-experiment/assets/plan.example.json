@@ -1,0 +1,32 @@
+{
+  "question_id": "Q-synthetic-smoke",
+  "hypothesis": "Linear regression should fit synthetic linear data better than a constant predictor.",
+  "purpose": "smoke",
+  "baseline": "mean predictor",
+  "comparison_group": "synthetic-linear-v1",
+  "code_commit": "REPLACE_WITH_FULL_GIT_HEAD",
+  "argv": [
+    "python3",
+    "toy_experiment.py",
+    "--method",
+    "linear",
+    "--seed",
+    "{seed}"
+  ],
+  "seeds": [
+    0
+  ],
+  "timeout_seconds": 60,
+  "env_keys": [],
+  "metrics_file": "metrics.json",
+  "dataset": {
+    "name": "synthetic-linear",
+    "version": "generator-v1",
+    "split": "60-train-40-test-per-seed"
+  },
+  "metric": {
+    "name": "mse",
+    "direction": "lower",
+    "unit": "squared-target-units"
+  }
+}
