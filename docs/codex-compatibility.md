@@ -1,13 +1,17 @@
-# Codex 兼容性与验证边界
+# Codex 配置与兼容性
 
-配置依据 2026-09-21 查阅的 OpenAI 官方说明：
+本次对照官方 Agent skills 与 Subagents 说明，以及用户 ResearchTemplate 的真实角色配置：
+- https://developers.openai.com/codex/skills
+- https://developers.openai.com/codex/subagents
 
-- [Agent skills](https://developers.openai.com/codex/skills)：项目 `.agents/skills/<name>/SKILL.md`，frontmatter 包含 name/description；scripts、references、assets 随技能存放。
-- [Subagents](https://developers.openai.com/codex/subagents)：原生自定义角色在 `.codex/agents/*.toml`，必需 name、description、developer_instructions。**不是** `.agents/agents`；skill 的 `agents/openai.yaml` 也不是原生 subagent 定义。
-- [Non-interactive mode](https://developers.openai.com/codex/noninteractive)：`codex exec --json --sandbox ... --output-schema ... -o ...`；默认认证继承本机登录，可按实际模式使用 CODEX_API_KEY。
+技能放 `.agents/skills/<name>/SKILL.md`。原生角色放 `.codex/agents/*.toml`，包含 name、description、developer_instructions，并可设置 model、model_reasoning_effort、sandbox_mode。不是 `.agents/agents/`，也不是技能的 agents/openai.yaml。
 
-不固定 CLI 版本、模型 ID 或高推理参数。当前项目配置使用 `[agents].enabled` 和 `max_concurrent_threads_per_session`；旧版本不认识时应升级或按其官方配置调整，不静默假装 subagent 已运行。项目配置需要信任项目后加载。执行器向登记的代码目录传 `--add-dir`；独立 reviewer 使用 read-only。
+项目配置使用 `[agents]` 的 enabled、max_concurrent_threads_per_session、default_subagent_model 和 default_subagent_reasoning_effort。项目需被信任才加载；实际已安装版本不支持时应核对对应官方文档，而不是声称文件存在就已生效。主 Agent 模型不固定。
 
-仅部署这些文件不自动授予网络、GPU、代码目录或写权限。`--execute` 是明确的本地运行开关，不包含 `--dangerously-bypass-approvals-and-sandbox`。非交互执行遇到审批需求可能阻塞/失败，超时后保留状态，由人类解决资源/审批条件，不绕过限制。
+角色文件中的模型/推理设置可能优先于派发参数；不要传一个覆盖值就假定切换成功。模型 ID 沿用用户配置，不保证当前账号或代理端点支持。模型不可用时报告实际错误，并由用户明确调整可用配置；不伪造执行模型。
 
-本实现的离线测试能验证 Python 逻辑、命令构造、schema/配置解析、预算/错误/恢复分支以及合成实验。生成环境没有安装 Codex CLI，也无法访问外网，因此真实 Codex 调用、在线文献 API 和实际科研 GPU 实验未验证。mock 通过不说明某个已安装 CLI 的版本一定兼容。先运行 doctor、dry-run，在自己的环境做一轮短预算验证，再增加预算。
+默认不开放 shell 网络，不绕过审批。只读/可写角色仍受实际继承的会话沙箱约束，角色说明不提供额外 OS 隔离。相邻独立代码/论文仓库需要宿主明确授予访问范围。任务文件所有权仍由主 Agent 精确分配。
+
+research-autopilot 仅走当前会话原生子智能体；loop.py 只返回迁移提示，不再调用 codex exec。checkpoint.py 不调用任何模型。缺原生能力时可以主 Agent 顺序完成适合工作，但独立审查不可冒充。
+
+离线测试验证脚本、TOML、状态与协议分支，不验证当前账户实际原生派发、模型可用性、在线 API、真实 GPU 解析器或 TeX 环境。首次本地使用先检查配置和少量真实材料，再扩展范围。完整验证记录见 validation-v2.md。

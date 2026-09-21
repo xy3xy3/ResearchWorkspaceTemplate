@@ -1,101 +1,125 @@
 # ResearchWorkspaceTemplate
 
-Codex 专用、本地实验优先的科研工作区。人类给出方向和资源边界，Codex 在边界内完成文献检索、可证伪假设、实现与实验、结果分析、独立复核和下一轮选择。它不是新的 Agent 平台，也不是必须安装外部 hooks 的工具集合。
+Codex 专用科研工作区。人类给方向和资源边界，主 Agent 用原生 subagent（子智能体）推进调研、idea、实验和论文；脚本负责实际工具操作，不负责启动其他 Codex 进程。
 
-## 仓库边界
+## 仓库布局
 
 ```text
-ResearchWorkspace/                    # 本仓库：研究记录与协作协议
-├── AGENTS.md
-├── .agents/skills/                    # 7 个去重后的技能；脚本/模板随技能分发
-├── .codex/agents/                     # Codex 原生 subagent 定义
-├── research/                         # 问题、文献、idea、实验收据、发现、决策、复核
-├── task/active/                      # planned / running / blocked
-├── task/archive/                     # completed / abandoned，不覆盖历史
-├── spec/                             # 人类确认的约束与预算
-├── ref/                              # 文献目录、定位信息、阅读笔记
-├── repos/implementation/             # 独立代码 Git 仓库，外层忽略
-├── paper/                            # 未来独立 LaTeX Git 仓库，外层忽略
-├── refrepo/                          # 参考实现 clone，外层忽略
-├── .runtime/                         # 本地日志、原始指标、锁、临时输出，忽略
-└── workspace.local.json              # 本机路径登记，忽略
+.agents/skills/       10 个技能，脚本、参考协议和模板随包存放
+.codex/agents/       8 个原生角色，含模型与推理强度
+research/            问题、idea、证据、实验收据、决策、报告
+task/active/        进行中任务（planned/running/blocked）
+task/archive/       已完成或放弃任务，不覆盖历史
+spec/                人类确认的约束与预算
+ref/<id>/            paper.md、source.json、repo.txt、notes.md
+repos/               独立代码仓库，外层忽略
+paper/               独立论文仓库，外层忽略
+refrepo/             参考实现克隆，外层忽略
+.runtime/            临时解析、日志、原始指标，忽略
+workspace.local.json 本机路径登记，忽略
 ```
 
-**`task/` 不加入 gitignore。** 忽略的是独立代码仓库、论文仓库和本地运行产物；任务、决策和科研报告应随工作区版本化。也支持代码仓库放在相邻目录。工作区不替代码仓库 commit、push 或维护 submodule。
+`task/`、`research/`、`spec/` 和资料文本随工作区版本管理。代码、论文与参考仓库不复制进外层 Git；也支持相邻独立仓库。解析原文与阅读笔记分开，避免摘要覆盖原文。
 
 ## 开始
 
-需要 Python 3.11+、Git，以及已经安装和登录的 Codex CLI；实验驱动支持 Linux、macOS 和 WSL。Python 工具仅使用标准库。模型和推理强度继承你的 Codex 配置，不固定模型名称。
+基础工具需要 Python 3.11+、Git；本地实验与检查点面向 Linux/macOS/WSL。实际研究在你已登录的 Codex 环境运行。主 Agent 模型保留你的配置，子角色配置见下表。
 
 ```bash
-# 在克隆下来的工作区根目录执行。该路径应指向你另行克隆的独立 Git 仓库。
 python3 .agents/skills/research-workspace/scripts/workspace.py init \
-  --direction '研究一个可测量的问题；描述现有方法、可用数据与计算资源' \
-  --code-repo repos/implementation
+  --direction '研究问题、现有方法、可用数据与资源边界' --code-repo repos/implementation
 python3 .agents/skills/research-workspace/scripts/workspace.py doctor
 ```
 
-登记不会下载代码或安装依赖。没有代码仓库时仍可先调研，开始实验前需要独立仓库已有提交。编辑 `research/brief.md` 和 `spec/`，写清数据许可、指标、对照、资源预算、不可改动项。项目级 Codex 配置在项目被信任后生效；始终从**工作区根目录**启动 Codex。
-
-交互运行：在 Codex 中输入：
+代码仓库应另行克隆并已有提交；登记不会下载代码或安装依赖。补全 `research/brief.md` 和 `spec/` 后，在工作区根目录的 Codex 中输入：
 
 ```text
-$research-autopilot 根据 research/brief.md 开始研究，在 spec 的预算内连续推进。
-先检查已有证据和 active 任务。能自主决定的继续做；遇到权限、预算、数据缺失或重大方向变更再停下。
-不要将 smoke test 当成科学证据。结束时落盘下一步和阻塞原因。
+$research-autopilot 根据 research/brief.md 推进研究。
+优先用原生子智能体，复用已有证据和 active 任务；在已批准预算内继续。
+遇到资源、权限、预算或重大方向变更时停下并保存下一步。
 ```
 
-需要在自己机器上由脚本驱动多轮独立 Codex 会话时：
+旧 `loop.py` 已停止执行模型，只返回迁移提示。不要再使用 `loop.py --execute`。新检查点保存原生会话状态，不是自动运行器：
 
 ```bash
-# 默认只检查配置，不执行 Codex
-python3 .agents/skills/research-autopilot/scripts/loop.py
-# 明确开始前台执行；每轮后启动新的只读 Codex 会话复核
-python3 .agents/skills/research-autopilot/scripts/loop.py --execute
-# 恢复时使用上次输出的实际 cycle ID，不重置原预算
-python3 .agents/skills/research-autopilot/scripts/loop.py --execute --resume C-xxxxxxxxxxxx
+python3 .agents/skills/research-autopilot/scripts/checkpoint.py start
+python3 .agents/skills/research-autopilot/scripts/checkpoint.py check N-<实际编号>
 ```
 
-驱动器不是守护服务，关掉进程不会自行继续。`touch .runtime/STOP` 请求停止；恢复前人工删除该文件。默认最多 6 轮、总计 7200 秒、单轮 1200 秒；一份实验计划的全部 seeds 最多 600 秒，连续两轮无进展或两次修订停下。硬时间限制由脚本模式执行；纯交互模式由主 Agent 遵守相同协议。预算只约束本地墙钟时间和轮数，**不是 API 费用、显存、网络或完整 OS 安全沙箱**。
+主 Agent 在派发和昂贵步骤前检查预算，并记录证据与下一步。默认预算仍由 `spec/autonomy.json` 决定；检查点墙钟时间包括会话间的空闲时间，不在恢复时重置。旧 C- 状态不自动解释为新 N- 状态。原生会话预算是协作式检查，不能强制中断一个未返回的模型调用；本地实验运行器仍有独立超时。关闭 Codex 后不会自动继续。
 
-## 技能职责
+## 模型分工
 
-| Skill | 合并后的职责 | 内置程序 |
+| 角色 | 模型 | 推理强度 |
 |---|---|---|
-| `research-workspace` | 初始化、任务活动/归档、决策留痕、上下文恢复 | `workspace.py` |
-| `research-autopilot` | 根据证据选择下一步；预算与恢复；执行/复核循环 | `loop.py`、输出 schema |
-| `research-literature` | 检索、去重、阅读定位、相关工作与新颖性核对 | `search.py`，arXiv/Crossref/Semantic Scholar |
-| `research-ideation` | 将方向变成可证伪假设、最小对照与淘汰标准 | 假设模板，不伪装成自动科学判断脚本 |
-| `research-experiment` | 实验设计、实现交接、本地运行、配对分析 | `run.py`、`analyze.py`、合成 smoke 示例 |
-| `research-review` | 冷启动复核、claim–evidence 检查、诚信审计 | `audit.py`，结构检查不等于科学证明 |
-| `research-writing` | 调研/阶段报告、论证整理、未来 LaTeX 交接 | 报告模板 |
+| quick_scan | gpt-5.6-luna | low |
+| literature_researcher、verifier | gpt-5.6-terra | medium |
+| code_explorer、experiment_implementer、manuscript_writer | gpt-5.6-terra | high |
+| idea_generator、evidence_reviewer | gpt-6-astra | high |
 
-不会为一次小任务强制加载所有技能；也不复制上游的 Claude hooks、全家桶安装器、跨模型 MCP 桥、云 GPU 或发布流程。编排技能依赖已安装的专用技能；每个执行技能自己的脚本依赖都在它的目录内，没有 `~/other-repo/tools` 回退。
+配置参考你的 ResearchTemplate，不是实测速度排名。通常只并行 1–3 个独立工作；简单任务主 Agent 直接完成。项目需被信任后加载配置，实际账号需有对应模型权限。模型不可用时明确处理，不假称调用成功；缺原生子智能体时可顺序推进适合的工作，但不以另起 Codex 进程补位。
 
-## 密钥与网络
+## 技能
 
-每个声明的变量按 **进程环境 > 当前 skill/.env > 工作区根 .env** 解析。值按字面解析，不运行 `source`，不进行 `${VAR}` 展开；进程中的空值也优先。只传入工具明确声明的变量，禁止用 `.env` 覆盖 PATH 等运行时路径。未声明的常见敏感环境变量不会传给子进程。
+| Skill | 主要职责 |
+|---|---|
+| research-workspace | 初始化、任务 active/archive、决策和验证留痕 |
+| research-autopilot | 原生委派、证据整合、预算和恢复 |
+| research-literature | alphaXiv、Sciverse、arXiv、Crossref、Semantic Scholar 检索与来源核对 |
+| research-paper-prep | 导入解析 Markdown、本地 PDF 解析、忽略目录中的参考仓库克隆 |
+| research-ideation | 多视角候选生成、机制去重、反证和最小实验 |
+| research-experiment | 本地实验、失败留痕、代码版本与配对分析 |
+| research-review | 原生独立审查、引用支持与收据结构审计 |
+| research-writing | 调研和阶段报告 |
+| research-latex | 独立论文仓库中的大纲、写作、修订、引用检查、编译 |
+| research-figures | 数据图、可编辑方法图、绘图源码与来源记录 |
 
-Codex 可复用已有登录；只有采用 API key 认证时才需要相应 key。文献 helper 的可选 key 是 `SEMANTIC_SCHOLAR_API_KEY`；arXiv 和 Crossref 路线无需该 key。复制 `.env.example` 到 `.env` 后按需填入，绝不提交真实密钥。已知密钥在运行日志和模型最终 JSON 中脱敏，但不能保证识别任意秘密，commit 前仍需检查。
+技能使用英文工作流程与必要中文说明；面向用户默认简洁中文，专有英文术语首次出现带中文释义。精简不删除证据或不确定性；英文论文、代码和 API 字段不插入聊天式括注。无需额外安装 caveman 或其他工作区。
 
-Codex 沙箱内调用外部文献 API 可能需要网络许可；内置 web search 与 Python 网络权限不同。默认配置不开放 shell 网络，也不绕过审批。网络不可用时记录缺口或导入已有元数据，不能用模型记忆伪造在线检索。
+## 文献与本地资料
 
-## 实验与证据
+复制文献技能的 `.env.example` 到同级 `.env`，只填需要的服务密钥：`ALPHAXIV_API_TOKEN`（兼容 ALPHAXIV_API_KEY）、`SCIVERSE_API_TOKEN`、可选 `SEMANTIC_SCHOLAR_API_KEY`。顺序为进程环境 > 当前 skill/.env > 项目 .env；不通过 shell source 执行配置。
 
-计划使用 argv 数组、固定 code commit、seeds、数据版本/划分、对照组和指标方向。每次生成新的输出目录；退出码成功且指标为有限数值才算执行成功。代码脏状态默认拒绝；仅 smoke/pilot 可显式 `--allow-dirty`，confirmatory 必须干净。实验期间代码改变会标成 tainted，不能作为正常证据。
+```bash
+python3 .agents/skills/research-literature/scripts/alphaxiv.py tools
+python3 .agents/skills/research-literature/scripts/sciverse.py semantic \
+  --args '{"query":"functional scene generation","mode":"balanced"}'
 
-`assets/toy_experiment.py` 是可真实执行的合成回归 **smoke fixture**，不代表你的项目结果。脚本模式不自动把示例改为科研实验证据；真实数据、依赖与 GPU 配置在独立代码仓库内定义。实操步骤见 [实验技能](.agents/skills/research-experiment/SKILL.md)。
+python3 .agents/skills/research-paper-prep/scripts/prepare.py \
+  --id paper-slug --source /local/parsed/paper.md --parser mineru \
+  --source-url https://arxiv.org/abs/2601.01234 --repo-url https://github.com/owner/repository
+python3 .agents/skills/research-paper-prep/scripts/clone_ref.py paper-slug --execute
+```
 
-文献存在不意味着它支持某个论断；成功退出不意味着方法正确；同模型新会话审查不意味着跨模型独立验证。负结果保留，无法验证的声明保持 unknown，不把 review 的 proceed 写成“科研成功”。
+将示例标识换成真实来源。优先导入已有 Markdown，避免重复 OCR（光学字符识别）；需要解析 PDF 时，显式 `--execute` 使用已安装的 MinerU 或 PaddleOCR。只发布文本和来源，删除自己的临时副本，不删除原文件。解析器可能首次下载模型权重，离线使用需提前配置；不自动安装或上传 PDF 到云解析 API。参考克隆默认仅计划，`--execute` 才克隆，不覆盖、不 pull/reset、不运行第三方代码。
 
-## 文档与测试
+文献客户端的网络权限和 Codex 内置搜索权限不同；默认配置不开放 shell 网络或绕过审批。外部服务会收到查询内容，私密材料外传要另获授权。返回的元数据/摘要不自动成为已核验的科学证据。
 
-- [架构与权威记录](docs/architecture.md)，[旧工作区迁移](docs/migration.md)。
-- [上游取舍与文件级来源](docs/upstream-map.md)，[Codex 配置与验证边界](docs/codex-compatibility.md)。
+## LaTeX 与作图
+
+先准备并登记一个独立 paper_repo；它不能是工作区本身。下面以已有独立 `paper/` 仓库为例：
+
+```bash
+python3 .agents/skills/research-latex/scripts/latex.py --paper-repo paper init
+python3 .agents/skills/research-latex/scripts/latex.py --paper-repo paper check
+python3 .agents/skills/research-latex/scripts/latex.py --paper-repo paper build --execute
+
+python3 .agents/skills/research-figures/scripts/plot.py --paper-repo paper \
+  --csv research/findings/verified-results.csv --out figures/main-comparison \
+  --kind bar --x method --y score --xlabel Method --ylabel 'Success rate (%)'
+```
+
+`init` 不覆盖已有论文；内置的是通用 article，不是假定会议模板。实际编译需要本机 latexmk/TeX，绘图需要 matplotlib；均不自动安装。图表保存 SVG/PDF、数据、独立可运行绘图源码及来源哈希。资料库 ref/ 的不保留图片规则，不影响独立论文仓库中自己制作的图。
+
+## 证据与验证边界
+
+实验仍在独立本地代码仓库内运行，记录 commit、seeds、协议、有限数值指标、失败和代码漂移。烟测数据、模型打分、成功编译或多个模型赞同都不等于科学结论成立。同家族审查不冒充跨模型家族验证；静态引用检查不证明原文支持。
 
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m compileall -q .agents tests
 ```
 
-测试使用临时独立 Git 仓库、真正的本地子进程和合成数据；API 与 Codex 协议使用 mock，不要求模型账户或 GPU。通过这些测试不等于已经通过真实 Codex / 科研 GPU 端到端验证。
+测试中的 HTTP、MCP（模型上下文协议）、解析器和模型调度协议使用模拟，不等于真实在线服务、本地 GPU 解析、Codex 原生委派或 LaTeX 端到端验证。具体执行记录见 [本次验证](docs/validation-v2.md)。
+
+[架构](docs/architecture.md) · [Codex 兼容性](docs/codex-compatibility.md) · [迁移](docs/migration.md) · [本次上游参考与取舍](docs/upstream-v2.md) · [首版来源](docs/upstream-map.md)

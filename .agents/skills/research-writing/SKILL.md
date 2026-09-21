@@ -1,18 +1,18 @@
 ---
 name: research-writing
-description: "将已核验的调研、实验、反证和决策整理为阶段报告，或向独立 LaTeX 仓库交接；不补造数字、引用或论文贡献。"
+description: "把调研、idea、实验、反证和决策整理为阶段报告；将论文正文与作图交给独立写作技能。"
 ---
 
-# 报告与论文交接
+# Research reports and manuscript handoff
 
-使用本 skill 的 `references/report-template.md`。输入真实材料与已知局限，输出 research/ 下的阶段报告。
-报告不是 task 流水账：以问题、方法、证据、当前判断、限制、下一步组织；执行细节链接 task ID。
-写作前核对 claim 对应的文献锚点或实验记录。事实、推断、假设分开，负结果与不确定性不删。
+Use `references/report-template.md`. Write to `research/` from actual materials: question, method, evidence, interpretation, limitations, and next step. Link implementation detail through stable task IDs rather than duplicating a task journal. Distinguish observed facts, inference, and hypothesis.
 
-图表数字来自可重跑的分析，不手填“看起来合理”的值；正文改善不得改变论据强度。
-引用先检查标识与元数据，再确认原文支持，不能只凭标题或二手总结。
-独立 review 指出的问题用证据回应；修改后按影响范围复查，不要求每轮重写全文。
+Check each substantive claim against the source passage or experiment record. Citations need more than a matching title; numbers come from analysis outputs, not manual embellishment. Keep negative results and the uncertainty that changes interpretation. Review-triggered edits must not silently strengthen claims.
 
-paper_repo 尚未注册时只产出工作区报告/写作计划，不建立混合论文工程。
-用户要求写论文且已注册独立仓库时，交接经过核验的 claim→证据、BibTeX、图表来源和版本，
-遵守论文仓库自身 AGENTS.md，不搬入本地日志/密钥/数据，也不自动投稿或推送。
+A small prose edit needs no full multiagent pipeline. For a substantial report, use an independent native `evidence_reviewer` on raw artifacts and changed claims. Integrate actionable findings, then check affected text rather than repeatedly rewriting everything.
+
+LaTeX source belongs to `research-latex`; quantitative plots and method diagrams belong to `research-figures`. Pass a compact claim/evidence map, verified bibliographic fields, figure data, and relevant versions. Without a registered paper repository, produce only a workspace writing plan/report. Do not create a mixed repository, submit a paper, or push code as a side effect.
+
+## Communication
+
+User-facing output: concise, natural Chinese; give the result, decisive evidence, and material limitation. On first use, append a Chinese gloss to a specialized English term, e.g. `ablation（消融实验）`. Keep complete sentences, negation, units, exact identifiers, and uncertainty. Do not abbreviate words artificially, narrate every tool call, or repeat a long report in chat. Give brief updates for long tasks. Code, literal API fields, quotations, and English manuscripts keep their required language; do not inject Chinese glosses into them. Shorter output must not mean shallower research.

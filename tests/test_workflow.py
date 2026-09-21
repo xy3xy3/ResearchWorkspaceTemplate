@@ -1,8 +1,9 @@
-"""Offline contract and local-process tests. No live Codex, APIs, or GPUs."""
+"""Retained workspace/experiment regression contracts; native orchestration is in test_v2."""
 from __future__ import annotations
 import argparse
 import copy
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -10,7 +11,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
 import tomllib
 import unittest
 from unittest import mock
@@ -31,7 +31,6 @@ runner = load('experiment_runner', 'research-experiment/scripts/run.py')
 analysis = load('experiment_analysis', 'research-experiment/scripts/analyze.py')
 review = load('research_audit', 'research-review/scripts/audit.py')
 literature = load('literature_search', 'research-literature/scripts/search.py')
-loop = load('autopilot_loop', 'research-autopilot/scripts/loop.py')
 
 class TemplateTests(unittest.TestCase):
     def test_runtime_vendors_identical(self):
@@ -43,15 +42,15 @@ class TemplateTests(unittest.TestCase):
         cfg = tomllib.loads((ROOT / '.codex/config.toml').read_text())
         self.assertEqual(cfg['agents']['max_concurrent_threads_per_session'], 3)
         agents = list((ROOT / '.codex/agents').glob('*.toml'))
-        self.assertEqual(len(agents), 4)
+        self.assertEqual(len(agents), 8)
         for p in agents:
             item = tomllib.loads(p.read_text())
-            for key in ['name', 'description', 'developer_instructions']:
+            for key in ['name', 'description', 'developer_instructions', 'model', 'model_reasoning_effort']:
                 self.assertTrue(item[key])
 
-    def test_seven_skills_and_json_schemas(self):
+    def test_ten_skills_and_json_schemas(self):
         files = list(SKILLS.glob('*/SKILL.md'))
-        self.assertEqual(len(files), 7)
+        self.assertEqual(len(files), 10)
         for p in files:
             text = p.read_text()
             self.assertTrue(text.startswith('---\n'))
@@ -64,13 +63,13 @@ class TemplateTests(unittest.TestCase):
 
     def test_gitignore_boundaries(self):
         with tempfile.TemporaryDirectory() as d:
-            d = Path(d)
-            subprocess.run(['git', 'init', '-q', str(d)], check=True)
-            shutil.copy(ROOT / '.gitignore', d / '.gitignore')
+            root = Path(d)
+            subprocess.run(['git', 'init', '-q', d], check=True)
+            shutil.copy(ROOT / '.gitignore', root / '.gitignore')
             for path in ['repos/code/a.py', 'paper/main.tex', 'refrepo/a/file', '.runtime/log', '.agents/skills/x/.env', 'workspace.local.json']:
-                self.assertEqual(subprocess.run(['git', '-C', str(d), 'check-ignore', '-q', path]).returncode, 0, path)
+                self.assertEqual(subprocess.run(['git', '-C', d, 'check-ignore', '-q', path]).returncode, 0, path)
             for path in ['task/active/T-1/meta.json', 'research/findings/f.md', 'spec/rules.md', '.env.example', '.agents/skills/x/.env.example', 'repos/.gitkeep']:
-                self.assertEqual(subprocess.run(['git', '-C', str(d), 'check-ignore', '-q', path]).returncode, 1, path)
+                self.assertEqual(subprocess.run(['git', '-C', d, 'check-ignore', '-q', path]).returncode, 1, path)
 
 class WorkspaceTests(unittest.TestCase):
     def setUp(self):
@@ -109,28 +108,24 @@ class WorkspaceTests(unittest.TestCase):
         return json.loads(result.stdout) if success else result
 
     def test_env_precedence_literals_empty_and_secret_filter(self):
-        skill = self.root / 'skill'
-        skill.mkdir()
+        skill = self.root / 'skill'; skill.mkdir()
         (self.root / '.env').write_text('TEST_API_KEY=project-key\nLITERAL="${UNCHANGED}"\n')
         (skill / '.env').write_text("TEST_API_KEY='skill-key' # literal\n")
         with mock.patch.dict(os.environ, {'TEST_API_KEY': 'process-key', 'OTHER_SECRET': 'do-not-pass'}, clear=True):
             env, secrets = runtime.environment(self.root, skill, ['TEST_API_KEY', 'LITERAL'])
             self.assertEqual(env['TEST_API_KEY'], 'process-key')
             self.assertEqual(env['LITERAL'], '${UNCHANGED}')
-            self.assertNotIn('OTHER_SECRET', env)
-            self.assertIn('process-key', secrets)
+            self.assertNotIn('OTHER_SECRET', env); self.assertIn('process-key', secrets)
             os.environ['TEST_API_KEY'] = ''
             self.assertEqual(runtime.environment(self.root, skill, ['TEST_API_KEY'])[0]['TEST_API_KEY'], '')
             del os.environ['TEST_API_KEY']
             self.assertEqual(runtime.environment(self.root, skill, ['TEST_API_KEY'])[0]['TEST_API_KEY'], 'skill-key')
             (skill / '.env').unlink()
             self.assertEqual(runtime.environment(self.root, skill, ['TEST_API_KEY'])[0]['TEST_API_KEY'], 'project-key')
-        with self.assertRaises(ValueError):
-            runtime.environment(self.root, skill, ['PATH'])
+        with self.assertRaises(ValueError): runtime.environment(self.root, skill, ['PATH'])
 
     def test_dotenv_does_not_execute_shell(self):
-        file = self.root / '.env'
-        file.write_text('X=$(touch SHOULD_NOT_EXIST)\n')
+        file = self.root / '.env'; file.write_text('X=$(touch SHOULD_NOT_EXIST)\n')
         self.assertEqual(runtime.dotenv(file)['X'], '$(touch SHOULD_NOT_EXIST)')
         self.assertFalse((self.root / 'SHOULD_NOT_EXIST').exists())
         file.write_text('invalid line\n')
@@ -146,17 +141,14 @@ class WorkspaceTests(unittest.TestCase):
 
     def test_independent_repository_required(self):
         self.assertEqual(runtime.code_repo(self.root, self.cfg), self.repo)
-        with self.assertRaises(ValueError): runtime.code_repo(self.root, {'code_repo': '.'})
-        with self.assertRaises(ValueError): runtime.code_repo(self.root, {'code_repo': 'research'})
-        with self.assertRaises(ValueError): runtime.code_repo(self.root, {'code_repo': 'repos/demo/nested'})
+        for path in ['.', 'research', 'repos/demo/nested']:
+            with self.assertRaises(ValueError): runtime.code_repo(self.root, {'code_repo': path})
 
     def test_task_create_event_archive_and_immutable(self):
-        task = self.cli('task-new', '--title', '执行测试', '--question', 'Q-1')
-        ident = task['id']
+        task = self.cli('task-new', '--title', '执行测试', '--question', 'Q-1'); ident = task['id']
         self.cli('task-event', ident, '--kind', 'decision', '--text', 'Use synthetic fixture', '--state', 'running')
         self.cli('task-close', ident, '--outcome', 'completed', '--summary', 'missing proof', success=False)
-        proof = self.root / 'research/findings/proof.md'
-        proof.write_text('Actual test evidence, not a research finding.')
+        (self.root / 'research/findings/proof.md').write_text('Actual test evidence, not a research finding.')
         done = self.cli('task-close', ident, '--outcome', 'completed', '--summary', 'checked', '--evidence', 'research/findings/proof.md')
         self.assertEqual(done['status'], 'completed')
         self.assertTrue((self.root / 'task/archive' / ident / 'meta.json').exists())
@@ -174,14 +166,12 @@ class WorkspaceTests(unittest.TestCase):
     def test_real_local_seed_runs_and_paired_analysis(self):
         base, _ = runner.execute(self.root, self.cfg, self.plan(method='mean'))
         cand, _ = runner.execute(self.root, self.cfg, self.plan())
-        self.assertEqual(base['status'], 'succeeded')
-        self.assertEqual(cand['status'], 'succeeded')
+        self.assertEqual(base['status'], 'succeeded'); self.assertEqual(cand['status'], 'succeeded')
         self.assertEqual(len(cand['trials']), 3)
         self.assertEqual(cand['source']['commit'], self.head)
         self.assertEqual(cand['source']['fingerprint'], cand['source_after']['fingerprint'])
         result = analysis.compare(base, cand)
-        self.assertLess(result['candidate_minus_baseline'], 0)
-        self.assertEqual(result['n'], 3)
+        self.assertLess(result['candidate_minus_baseline'], 0); self.assertEqual(result['n'], 3)
         self.assertIsNotNone(result['paired_bootstrap_95_percent_interval'])
         self.assertEqual(review.audit(self.root)['status'], 'PASS')
         self.assertEqual(runtime.git(self.repo, 'status', '--porcelain'), '')
@@ -191,32 +181,26 @@ class WorkspaceTests(unittest.TestCase):
         with self.assertRaises(ValueError): runner.execute(self.root, self.cfg, self.plan())
         with self.assertRaises(ValueError): runner.execute(self.root, self.cfg, self.plan(purpose='confirmatory'), allow_dirty=True)
         result, _ = runner.execute(self.root, self.cfg, self.plan(purpose='smoke', seeds=[0]), allow_dirty=True)
-        self.assertEqual(result['status'], 'succeeded')
-        self.assertTrue(result['source']['dirty'])
+        self.assertEqual(result['status'], 'succeeded'); self.assertTrue(result['source']['dirty'])
 
     def test_wrong_commit_and_over_budget_rejected(self):
-        plan = self.plan()
-        plan['code_commit'] = 'not-the-commit'
+        plan = self.plan(); plan['code_commit'] = 'not-the-commit'
         with self.assertRaises(ValueError): runner.execute(self.root, self.cfg, plan)
-        plan = self.plan()
-        plan['timeout_seconds'] = 601
+        plan = self.plan(); plan['timeout_seconds'] = 601
         with self.assertRaises(ValueError): runner.execute(self.root, self.cfg, plan)
 
     def test_nonzero_exit_and_invalid_metric_receipts(self):
         for snippet, status in [('raise SystemExit(4)', 'failed'), ('pass', 'invalid_metrics'),
             ("import os,json;from pathlib import Path;Path(os.environ['RW_RUN_DIR'],'metrics.json').write_text(json.dumps({'mse':float('nan')}))", 'invalid_metrics')]:
-            plan = self.plan(seeds=[0])
-            plan['argv'] = [sys.executable, '-c', snippet]
+            plan = self.plan(seeds=[0]); plan['argv'] = [sys.executable, '-c', snippet]
             record, path = runner.execute(self.root, self.cfg, plan)
-            self.assertEqual(record['status'], 'failed')
-            self.assertEqual(record['trials'][0]['status'], status)
+            self.assertEqual(record['status'], 'failed'); self.assertEqual(record['trials'][0]['status'], status)
             self.assertTrue(path.exists())
 
     def test_stop_and_timeout_reap_process(self):
         env, _ = runtime.environment(self.root, self.root)
         result = runtime.run_logged([sys.executable, '-c', 'import time;time.sleep(30)'], self.root, env, .15, self.root / '.runtime/timeout.log')
-        self.assertEqual(result['status'], 'timeout')
-        self.assertLess(result['seconds'], 5)
+        self.assertEqual(result['status'], 'timeout'); self.assertLess(result['seconds'], 5)
         (self.root / '.runtime/STOP').touch()
         result = runtime.run_logged([sys.executable, '-c', 'raise Exception()'], self.root, env, 1, self.root / '.runtime/stopped.log', stop=self.root / '.runtime/STOP')
         self.assertEqual(result['status'], 'stopped')
@@ -243,93 +227,21 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(review.audit(self.root)['status'], 'NOT_APPLICABLE')
         result, _ = runner.execute(self.root, self.cfg, self.plan(seeds=[0]))
         raw = self.root / '.runtime/experiments' / result['id'] / 'seed-0/metrics.json'
-        raw.write_text('{"mse":999}')
-        self.assertEqual(review.audit(self.root)['status'], 'FAIL')
-        raw.unlink()
-        self.assertEqual(review.audit(self.root)['status'], 'WARN')
+        raw.write_text('{"mse":999}'); self.assertEqual(review.audit(self.root)['status'], 'FAIL')
+        raw.unlink(); self.assertEqual(review.audit(self.root)['status'], 'WARN')
 
     def test_claims_need_support_and_reject_smoke(self):
         run, path = runner.execute(self.root, self.cfg, self.plan(purpose='smoke', seeds=[0]))
-        ref = runtime.evidence(self.root, path.relative_to(self.root))
-        ref['locator'] = 'trials[0].metrics.mse'
+        ref = runtime.evidence(self.root, path.relative_to(self.root)); ref['locator'] = 'trials[0].metrics.mse'
         runtime.write_json(self.root / 'research/claims.json', [{'status': 'supported', 'evidence': [ref]}])
         self.assertEqual(review.audit(self.root)['status'], 'FAIL')
-
-    def fake_codex(self, mode='complete'):
-        binary = self.root / 'fake-codex'
-        binary.write_text('#!' + sys.executable + '\n' + r'''
-import json, sys
-from pathlib import Path
-args = sys.argv[1:]
-root = Path(args[args.index('-C')+1])
-final = Path(args[args.index('-o')+1])
-phase = 'review' if args[args.index('--sandbox')+1] == 'read-only' else 'execute'
-mode = (root / '.runtime/mock-mode').read_text()
-if mode == 'error':
-    raise SystemExit(3)
-if phase == 'review':
-    value = {'status': 'revise' if mode == 'revise' else 'proceed', 'summary': 'Offline mock review only.', 'next_action': 'Inspect the synthetic fixture.'}
-else:
-    artifact = root / 'research/findings/mock.md'
-    artifact.write_text('A synthetic fixture. This is not genuine scientific evidence.')
-    value = {'status': 'complete' if mode == 'complete' else 'continue', 'summary': 'Offline mock execution only.', 'next_action': 'Review original fixture.', 'progress': True, 'artifacts': [] if mode == 'empty' else ['research/findings/mock.md']}
-final.write_text(json.dumps(value))
-print(json.dumps({'mock': True, 'phase': phase}))
-''')
-        binary.chmod(0o700)
-        (self.root / '.runtime/mock-mode').write_text(mode)
-        return str(binary)
-
-    def loop_args(self, mode='complete', **kwargs):
-        args = dict(execute=True, resume=None, max_rounds=None, codex_bin=self.fake_codex(mode), model=None)
-        args.update(kwargs)
-        return argparse.Namespace(**args)
-
-    def test_autopilot_mock_complete_and_resume_no_new_round(self):
-        args = self.loop_args()
-        state = loop.drive(self.root, self.cfg, args)
-        self.assertEqual(state['status'], 'completed')
-        self.assertEqual(len(state['attempts']), 1)
-        self.assertEqual(state['attempts'][0]['review']['status'], 'proceed')
-        args.resume = state['id']
-        self.assertEqual(len(loop.drive(self.root, self.cfg, args)['attempts']), 1)
-
-    def test_autopilot_empty_evidence_and_process_error_not_success(self):
-        for mode in ['empty', 'error']:
-            state = loop.drive(self.root, self.cfg, self.loop_args(mode))
-            self.assertEqual(state['status'], 'error')
-            self.assertEqual(state['attempts'][0]['status'], 'error')
-
-    def test_autopilot_budget_stall_stop_and_contract_resume(self):
-        args = self.loop_args('continue', max_rounds=1)
-        state = loop.drive(self.root, self.cfg, args)
-        self.assertEqual(state['status'], 'budget-exhausted')
-        args.resume = state['id']
-        self.assertEqual(loop.drive(self.root, self.cfg, args)['spent_seconds'], state['spent_seconds'])
-        (self.root / 'spec/changed.md').write_text('new restriction')
-        with self.assertRaises(ValueError): loop.drive(self.root, self.cfg, args)
-        state = loop.drive(self.root, self.cfg, self.loop_args('revise'))
-        self.assertEqual(state['status'], 'stalled')
-        (self.root / '.runtime/STOP').touch()
-        state = loop.drive(self.root, self.cfg, self.loop_args())
-        self.assertEqual(state['status'], 'stopped')
-        self.assertEqual(state['attempts'], [])
-
-    def test_autopilot_dry_run_no_execution_and_no_budget_escalation(self):
-        args = self.loop_args(execute=False)
-        self.assertEqual(loop.drive(self.root, self.cfg, args)['status'], 'dry-run')
-        self.assertFalse(list((self.root / 'research/cycles').glob('*/state.json')))
-        args.max_rounds = 100
-        with self.assertRaises(ValueError): loop.drive(self.root, self.cfg, args)
 
     def test_runtime_log_redaction_and_cap(self):
         result = runtime.run_logged([sys.executable, '-c', "print('super-secret-key')"], self.root, dict(os.environ), 2, self.root / '.runtime/redacted.log', ['super-secret-key'])
         self.assertEqual(result['status'], 'succeeded')
         self.assertNotIn('super-secret-key', (self.root / '.runtime/redacted.log').read_text())
         result = runtime.run_logged([sys.executable, '-c', "print('x'*10000)"], self.root, dict(os.environ), 2, self.root / '.runtime/cap.log', max_bytes=100)
-        self.assertEqual(result['status'], 'log_limit')
-        self.assertLess((self.root / '.runtime/cap.log').stat().st_size, 200)
-
+        self.assertEqual(result['status'], 'log_limit'); self.assertLess((self.root / '.runtime/cap.log').stat().st_size, 200)
 
 class LiteratureTests(unittest.TestCase):
     def test_identifier_dedup_without_title_only_false_merge(self):
@@ -350,36 +262,29 @@ class LiteratureTests(unittest.TestCase):
         for provider, body in [('arxiv', atom), ('crossref', crossref), ('semanticscholar', semantic)]:
             with mock.patch.object(literature, 'get', return_value=body):
                 result = literature.retrieve(provider, 'test', 1, {})
-                self.assertEqual(len(result), 1)
-                self.assertEqual(result[0]['verification'], 'metadata-only')
+                self.assertEqual(len(result), 1); self.assertEqual(result[0]['verification'], 'metadata-only')
 
     def test_partial_and_failed_searches_are_recorded(self):
-        import io
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             ws.initialize(root, argparse.Namespace(code_repo=None, paper_repo=None, direction='offline literature tests'))
-            argv = ['search.py', '--root', d, '--query', 'test']
             for partial in [True, False]:
                 def retrieve(provider, *unused):
-                    if partial and provider == 'arxiv':
-                        return [{'title': 'Offline test', 'arxiv_id': '0000.00000', 'sources': ['arxiv'], 'verification': 'metadata-only'}]
+                    if partial and provider == 'arxiv': return [{'title': 'Offline test', 'arxiv_id': '0000.00000', 'sources': ['arxiv'], 'verification': 'metadata-only'}]
                     raise RuntimeError('simulated provider failure')
                 output = io.StringIO()
-                with mock.patch.object(sys, 'argv', argv), mock.patch.object(literature, 'retrieve', side_effect=retrieve), mock.patch.object(sys, 'stdout', output):
+                with mock.patch.object(sys, 'argv', ['search.py', '--root', d, '--query', 'test']), mock.patch.object(literature, 'retrieve', side_effect=retrieve), mock.patch.object(sys, 'stdout', output):
                     code = literature.main()
                 self.assertEqual(code, 0 if partial else 2)
                 message = json.loads(output.getvalue())
                 self.assertEqual(message['status'], 'partial' if partial else 'failed')
-                report = runtime.read_json(root / 'research/literature' / (message['id'] + '.json'))
-                self.assertTrue(report['errors'])
+                self.assertTrue(runtime.read_json(root / 'research/literature' / (message['id'] + '.json'))['errors'])
 
     def test_import_remains_unverified(self):
-        import io
         with tempfile.TemporaryDirectory() as d:
             root = Path(d)
             ws.initialize(root, argparse.Namespace(code_repo=None, paper_repo=None, direction='offline import tests'))
-            source = root / 'metadata.json'
-            source.write_text(json.dumps([{'title': 'Test import', 'doi': '10.1/import'}]))
+            source = root / 'metadata.json'; source.write_text(json.dumps([{'title': 'Test import', 'doi': '10.1/import'}]))
             with mock.patch.object(sys, 'argv', ['search.py', '--root', d, '--import-file', str(source)]), mock.patch.object(sys, 'stdout', io.StringIO()):
                 self.assertEqual(literature.main(), 0)
             self.assertEqual(runtime.read_json(root / 'ref/catalog.json')[0]['verification'], 'unverified-import')

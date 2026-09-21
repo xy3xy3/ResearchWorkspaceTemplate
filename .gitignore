@@ -6,7 +6,22 @@
 /refrepo/*
 !/refrepo/.gitkeep
 /ref/*/repo/
-/ref/**/*.pdf
+# Literature archive: text and metadata only, including case variants.
+/ref/**/*.[pP][dD][fF]
+/ref/**/*.[pP][nN][gG]
+/ref/**/*.[jJ][pP][gG]
+/ref/**/*.[jJ][pP][eE][gG]
+/ref/**/*.[gG][iI][fF]
+/ref/**/*.[wW][eE][bB][pP]
+/ref/**/*.[sS][vV][gG]
+/ref/**/*.[tT][iI][fF]
+/ref/**/*.[tT][iI][fF][fF]
+/ref/**/*.[bB][mM][pP]
+/ref/**/*.[aA][vV][iI][fF]
+/ref/**/*.[eE][pP][sS]
+/ref/**/*.zip
+/ref/**/images/
+/ref/.staging-*/
 # Local execution and machine state.
 /.runtime/
 /workspace.local.json
@@ -20,4 +35,4 @@
 __pycache__/
 *.py[cod]
 .DS_Store
-# task/, research/, spec/ and ref metadata are intentionally tracked.
+# task/, research/, spec/ and ref text/metadata remain tracked.
