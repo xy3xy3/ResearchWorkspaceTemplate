@@ -1,5 +1,4 @@
-# Project-local configuration; loaded by Codex only for a trusted project.
-# No model pin, no approval bypass, no automatically enabled shell networking.
+# Trusted-project configuration. Main agent model remains user-controlled.
 sandbox_mode = "workspace-write"
 approval_policy = "on-request"
 web_search = "live"
@@ -7,6 +6,8 @@ web_search = "live"
 [agents]
 enabled = true
 max_concurrent_threads_per_session = 3
+default_subagent_model = "gpt-5.6-terra"
+default_subagent_reasoning_effort = "medium"
 
 [sandbox_workspace_write]
 network_access = false

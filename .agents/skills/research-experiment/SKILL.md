@@ -1,44 +1,29 @@
 ---
 name: research-experiment
-description: "在独立本地代码仓库执行有预算的实验并保存真实指标、失败、代码版本与配对分析；合并实验桥接、运行、结果分析，不做远程调度。"
+description: "在独立本地代码仓库执行有预算的实验，保留真实指标、失败、代码版本和配对分析，不远程调度。"
 ---
 
-# 本地实验与分析
+# Local experiments and analysis
 
-脚本、运行库和演示资产都在当前 skill 内。需要 Python 3.11+、Git 和本地实验自身的依赖；
-不安装云运行时，不依赖外部 tools/ 或 hooks。当前运行器支持 Linux/macOS/WSL。
+All executable helpers and sample assets are inside this skill. Use Python 3.11+, Git, Linux/macOS/WSL, and the experiment's existing local environment. No cloud scheduler, dependency installation, or external hook is implied.
 
-## 计划与执行
-
-复制 `assets/plan.example.json` 到 `research/experiments/<plan-id>.plan.json`，替换问题、假设、
-代码完整 HEAD、数据版本/划分、基线、指标、种子、比较组、命令和预算。
-代码必须在 workspace.local.json 注册的独立 Git 仓库；计划文件和运行记录属于工作区。
+Copy `assets/plan.example.json` to a real plan under `research/experiments/`. Fill the question, falsifiable hypothesis, full code HEAD, dataset/version/split, baseline, metric direction/unit, seeds, comparison group, argv, and budget. The implementation lives in the independently registered code repository; plans/receipts live in the workspace.
 
 ```bash
 python3 .agents/skills/research-experiment/scripts/run.py --plan research/experiments/my-plan.plan.json
 python3 .agents/skills/research-experiment/scripts/analyze.py --baseline research/experiments/E-baseline.json --candidate research/experiments/E-candidate.json --output research/findings/comparison.json
 ```
 
-argv 是参数数组，不走 shell 拼接。`{seed}`、`{run_dir}` 会替换为本次值；
-同时提供 `RW_SEED`、`RW_RUN_DIR`。实现必须把新指标写到 `$RW_RUN_DIR/metrics.json`，
-不能复用代码目录中的旧 metrics.json。指标必须是 JSON 对象的有限数值，布尔值和 NaN 均拒绝。
-新 run ID 和 seed 子目录避免旧输出被误读；一个工作区同时只运行一个实验计划。
+The runner uses an argv array, not shell concatenation. `{seed}` and `{run_dir}` are substituted; `RW_SEED` and `RW_RUN_DIR` are available. Write fresh finite numeric metrics to `$RW_RUN_DIR/metrics.json`; never reuse a stale code-directory output. Booleans/NaN are not valid measurements. One workspace runs one plan at a time.
 
-运行器记录退出码、所有已尝试种子、预算终止、代码 HEAD/差异哈希、环境摘要和指标哈希。
-成功要求全部计划种子完成且代码在运行中未变化；失败、超时和源代码变化不能变成 succeeded。
-原始输出与补丁在 .runtime/，摘要在 research/experiments/。墙钟预算不是 GPU-hours 精确计费。
-默认拒绝脏代码；smoke/pilot 可显式 `--allow-dirty`，记录补丁及未跟踪文件哈希，并标明恢复限制；
-confirmatory 需要干净代码 commit。禁止为了过门禁执行 reset/clean 或删除用户修改。
+Success requires all planned seeds and no source change during execution. Preserve failures, timeouts, and tainted code states. Each run records code HEAD/diff fingerprint, seeds, termination, environment summary, and metric hashes. Raw outputs stay in `.runtime/`; receipts remain in `research/experiments/`. A receipt does not replace the code dependency lock, data version, and raw artifacts required for reproduction.
 
-只传递 plan.env_keys 显式列出的密钥，按进程环境 → skill/.env → 项目 .env 解析。
-不要把密钥放 argv；PATH/HOME/加载器路径不能通过 .env allowlist 覆盖。
-脚本不是不受信任代码的安全沙箱。先检查实验程序；不得自行脱离进程组、启动远程任务或改预算。
+Dirty code is rejected by default; smoke/pilot may explicitly use `--allow-dirty` with recorded limitations, but confirmatory runs require a clean commit. Never reset/clean user changes to satisfy a gate. Pass only declared `plan.env_keys`, resolved as process > skill `.env` > project `.env`. Secrets never belong in argv. The runner is not an OS sandbox for untrusted code.
 
-## 分析
+Native `experiment_implementer` workers edit only assigned files; `verifier` runs scoped approved checks without changing code/assertions to force success. Parent owns the experiment question and integration. Workers do not start Codex or additional workers.
 
-只比较成功、非 smoke、比较组/数据/指标一致且种子相同的结果；保留所有失败种子说明。
-输出候选减基线的差值，结合指标方向解释，不能一律把正值称作提升。
-脚本给出描述性均值、标准差和可复现配对 bootstrap 区间；不足 3 个种子不出区间。
-种子变异不等于数据总体不确定性，区间不是自动显著性结论。
+Compare only successful non-smoke runs with matching protocol/data/metrics/comparison group/seeds. Interpret candidate-minus-baseline using the metric direction. The helper's paired bootstrap interval describes seed variation; fewer than three seeds yield no interval. It is not automatic significance or population uncertainty. `assets/toy_experiment.py` is only a synthetic smoke fixture, never a source of manuscript results.
 
-`assets/toy_experiment.py` 仅用于端到端 smoke 演示，不是本项目的科研结果。
+## Communication
+
+User-facing output: concise, natural Chinese; give the result, decisive evidence, and material limitation. On first use, append a Chinese gloss to a specialized English term, e.g. `ablation（消融实验）`. Keep complete sentences, negation, units, exact identifiers, and uncertainty. Do not abbreviate words artificially, narrate every tool call, or repeat a long report in chat. Give brief updates for long tasks. Code, literal API fields, quotations, and English manuscripts keep their required language; do not inject Chinese glosses into them. Shorter output must not mean shallower research.
