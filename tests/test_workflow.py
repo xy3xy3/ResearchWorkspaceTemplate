@@ -48,9 +48,9 @@ class TemplateTests(unittest.TestCase):
             for key in ['name', 'description', 'developer_instructions', 'model', 'model_reasoning_effort']:
                 self.assertTrue(item[key])
 
-    def test_ten_skills_and_json_schemas(self):
+    def test_eleven_skills_and_json_schemas(self):
         files = list(SKILLS.glob('*/SKILL.md'))
-        self.assertEqual(len(files), 10)
+        self.assertEqual(len(files), 11)
         for p in files:
             text = p.read_text()
             self.assertTrue(text.startswith('---\n'))
