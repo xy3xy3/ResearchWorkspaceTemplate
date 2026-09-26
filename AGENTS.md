@@ -12,7 +12,9 @@
 
 由当前 Codex 主 Agent 组织调研、假设、最小对照、本地实验、分析、独立复核和下一步。优先使用 Codex 原生子智能体；不得启动另一个 Codex CLI、codex exec、Python/SDK 模型驱动器或 Codex MCP 桥来编排研究。技能脚本只做检索、解析、实验、编译、绘图和状态留痕。
 
-按需读取 research-workspace、research-autopilot、research-literature、research-paper-prep、research-ideation、research-experiment、research-review、research-writing、research-latex、research-figures。不要每个任务加载全部技能。脚本和模板以当前技能目录为准，不回退到外部工作区 tools 或 hook。
+按需读取 research-workspace、research-autopilot、research-literature、research-paper-prep、research-ideation、research-experiment、research-review、research-writing、research-academic-tailor、research-latex、research-figures。不要每个任务加载全部技能。脚本和模板以当前技能目录为准，不回退到外部工作区 tools 或 hook。
+
+论文拆解、论证组织、章节写作和逐条返修按需使用 research-academic-tailor；它是单一论文写作技能，不包含导师或毕业规划。排版编译、绘图和实验执行仍由已有技能负责。
 
 独立工作通常同时派发 1–3 个子智能体，主 Agent 是唯一整合负责人。委派包含具体问题、输入路径、文件所有权、约束、完成条件。复用已有检索；不重复派发，不为填满角色而并行。子智能体不得继续派生子智能体，不得启动另一个模型进程。
 

@@ -1,0 +1,284 @@
+{
+  "schema_version": 1,
+  "prepared_on": "2026-09-26",
+  "archive_name": "水导资源.zip",
+  "archive_sha256": "77dc210da2458fe49386c08016b9e461da1f5cdc6fbdb877fd22b4c5741c5582",
+  "total_files": 44,
+  "total_pages": 241,
+  "handouts": 24,
+  "transcripts": 20,
+  "missing_transcript_sections": [
+    "2.5",
+    "2.6",
+    "3.3"
+  ],
+  "upstream_repo": "https://github.com/LZX0719-Hub/shuidao-skill",
+  "upstream_commit": "d2417333a6f4d577b2cb8c68206d0443252fc936",
+  "note": "in_scope is selection for synthesis, not a claim of verbatim reading or independent factual verification. Raw files are not distributed.",
+  "files": [
+    {
+      "path": "课件/00先导片.pdf",
+      "pages": 1,
+      "sha256": "8779610921d7e3f8783968ea70ff93856bbb6b842d1d198abac271079873dd38",
+      "in_scope": false
+    },
+    {
+      "path": "课件/01学术裁缝实例演示.pdf",
+      "pages": 1,
+      "sha256": "5fdfc5c243d846b90fd1d1232d9f4096ab83b9f3e50f83af910b6323d97ca8e8",
+      "in_scope": true
+    },
+    {
+      "path": "课件/11定毕业目标.pdf",
+      "pages": 4,
+      "sha256": "3d2aba1496d145b2426836ad17d79da7ab88f4aa92227ed1d4ab0df07c117c9e",
+      "in_scope": false
+    },
+    {
+      "path": "课件/12定目标导师.pdf",
+      "pages": 3,
+      "sha256": "4fb55759dfde1adfd58c7bd242c8b6c76be5ee23800f91a79f304a9016f81c5e",
+      "in_scope": false
+    },
+    {
+      "path": "课件/13定科研方向.pdf",
+      "pages": 4,
+      "sha256": "651e6c9bdfce2a2e933d56130a5059535e1abba5c9a8a02772ae766c8dc83c41",
+      "in_scope": false
+    },
+    {
+      "path": "课件/14定科研基础.pdf",
+      "pages": 3,
+      "sha256": "eaaf7b7abecb6ee38dfcd4fb17a8169df2900e883806cf685ef481841e5e14de",
+      "in_scope": false
+    },
+    {
+      "path": "课件/15定开题方向.pdf",
+      "pages": 3,
+      "sha256": "2f6a71087f502b1b549da1f6db8f88d410e419647d66fd626037428734ab0c8d",
+      "in_scope": false
+    },
+    {
+      "path": "课件/210文科假想.pdf",
+      "pages": 3,
+      "sha256": "1f0cc0f3acb7ac05fc8db934e21617368f70ce2ee377283d2a9c2956518c17ac",
+      "in_scope": true
+    },
+    {
+      "path": "课件/21学术裁缝的本质.pdf",
+      "pages": 4,
+      "sha256": "39edb8dba3a89e0a64efd9f0074aa499e9b96d07dc5eb30fd30870ab518afeb9",
+      "in_scope": true
+    },
+    {
+      "path": "课件/22如何阅读论文.pdf",
+      "pages": 6,
+      "sha256": "1b41bf638082a8bc808e7c6403e8f470e7b0d7c40d44aeabc583c7fb94cc7e08",
+      "in_scope": true
+    },
+    {
+      "path": "课件/23如何拆分论文.pdf",
+      "pages": 4,
+      "sha256": "4d100981199f0424e1fb07c6228aa679649a5b87e422e558167cfc1de86f3bf2",
+      "in_scope": true
+    },
+    {
+      "path": "课件/24定基准模型.pdf",
+      "pages": 4,
+      "sha256": "1b9c4dd7c3ec685476bce7facd5dab8634f05a82a17ebd6587a0b6dfe0ad84b9",
+      "in_scope": true
+    },
+    {
+      "path": "课件/25定学术模块.pdf",
+      "pages": 3,
+      "sha256": "92cb3062ff01246fdf687180061ef5f9b688e56ad9dd1de5baad74ea76d96f63",
+      "in_scope": true
+    },
+    {
+      "path": "课件/26模块和工作量.pdf",
+      "pages": 5,
+      "sha256": "ba99edd7c3bbd4aff510b49635a450565144bdfd5bc5c665f9107d1a01991f0d",
+      "in_scope": true
+    },
+    {
+      "path": "课件/27学术裁缝实操.pdf",
+      "pages": 3,
+      "sha256": "4069af9edbe831aa4b42596b9399cce31b73ce8ce4a2620750723074b130e4a0",
+      "in_scope": true
+    },
+    {
+      "path": "课件/28学术裁缝不是学术不端，没实验的学术裁缝才是学术不端.pdf",
+      "pages": 2,
+      "sha256": "d9488bf9a0d6ecbc92c6432dc79c1911a6a7f153403c3cebf133a40b17b1ddd8",
+      "in_scope": true
+    },
+    {
+      "path": "课件/29理工科延伸.pdf",
+      "pages": 2,
+      "sha256": "3d9292db99762542e49cb0c936424ae23d609811f664b32bbd9cff59add4b555",
+      "in_scope": true
+    },
+    {
+      "path": "课件/31如何编故事.pdf",
+      "pages": 3,
+      "sha256": "5681f311e6ba7f3c9aca986c59bf3b58f98b32fc7da3f97b2b62c178b3ff4f13",
+      "in_scope": true
+    },
+    {
+      "path": "课件/32如何写小论文.pdf",
+      "pages": 4,
+      "sha256": "d4dbe25ccb7f25490302565dfba941f9616169f0a57b4d80203072325ca0e84c",
+      "in_scope": true
+    },
+    {
+      "path": "课件/33小论文目标期刊的选择.pdf",
+      "pages": 3,
+      "sha256": "fdeea911cb20004afd59e7c1a85f36e35405d9a364643a6fe2003daec6bfe1af",
+      "in_scope": true
+    },
+    {
+      "path": "课件/34如何写大论文.pdf",
+      "pages": 4,
+      "sha256": "4eb4550882992fccf034fd0fe6dcce73a73cc6409fc28edd0104a17e2b9833cb",
+      "in_scope": true
+    },
+    {
+      "path": "课件/35返修意见修改.pdf",
+      "pages": 2,
+      "sha256": "ff3c91a9f9f03c21740361bb7644a03b7e16ed63edf2956daf3564b34b65b087",
+      "in_scope": true
+    },
+    {
+      "path": "课件/41开题和中期答辩.pdf",
+      "pages": 2,
+      "sha256": "60c672c555b3e0e02aa166e2543b79ba242cd8b5c8352b65523596aad4f977ee",
+      "in_scope": false
+    },
+    {
+      "path": "课件/42预答辩和毕业答辩.pdf",
+      "pages": 2,
+      "sha256": "b7a9fa9f007fa9140b123585ded41ad9022a8c2e0c9bd2830ae9aac60086ac37",
+      "in_scope": false
+    },
+    {
+      "path": "音频转文本/[10]--2.4 定基准模型_原文.pdf",
+      "pages": 14,
+      "sha256": "fd8764e5700c57af958ccd0c705d6f93f179649caf179c3474939f9a5c4eefa6",
+      "in_scope": true
+    },
+    {
+      "path": "音频转文本/[13]--2.7 学术裁缝实操_原文.pdf",
+      "pages": 6,
+      "sha256": "5904e679fb1e6815d0500d0d31a273399898044bb91d964df6dad8a701b96644",
+      "in_scope": true
+    },
+    {
+      "path": "音频转文本/[14]--2.8 学术裁缝不是学术不端，没试验的学术裁缝才是（核心章节）_原文.pdf",
+      "pages": 5,
+      "sha256": "a392edf7fba45f521119ee55107282a433379dc25b02d5c0abe3ed3aa3af6158",
+      "in_scope": true
+    },
+    {
+      "path": "音频转文本/[15]--2.9 理工科延伸_原文.pdf",
+      "pages": 4,
+      "sha256": "2f5a48004788504123ec182dff0d8bbfd5c284d7c32f9615cdb3ef47f86b49ba",
+      "in_scope": true
+    },
+    {
+      "path": "音频转文本/[16]--2.10 文科假想_原文.pdf",
+      "pages": 5,
+      "sha256": "bc1ba8017e308bd8b787b30e9242a8eabd8f54264fb7231c32e742a2d84fafd0",
+      "in_scope": true
+    },
+    {
+      "path": "音频转文本/[17]--3.1 如何编故事_原文.pdf",
+      "pages": 6,
+      "sha256": "c81c4617e2e05076dc98bb2ae332ba60fe938ec0656426a9195d3bf88df7e2ca",
+      "in_scope": true
+    },
+    {
+      "path": "音频转文本/[18]--3.2 如何写小论文_原文.pdf",
+      "pages": 8,
+      "sha256": "c7714c482b2a87250322683512de3e5ca55b5efd92dc909020ec1db8910c6261",
+      "in_scope": true
+    },
+    {
+      "path": "音频转文本/[1]--先导片_原文.pdf",
+      "pages": 1,
+      "sha256": "5389796742be2f11832819b80d1e4fbb8ab8ea55f58e6b28d14e8e8944e8db60",
+      "in_scope": false
+    },
+    {
+      "path": "音频转文本/[20]--3.4 如何写大论文_原文.pdf",
+      "pages": 5,
+      "sha256": "d110faa8969312632b379baeafc66b454e5181a199c6bf4a1770b41bf93a4ed5",
+      "in_scope": true
+    },
+    {
+      "path": "音频转文本/[21]--3.5 返修意见修改_原文.pdf",
+      "pages": 3,
+      "sha256": "e79c31abc01feffd757e5e96e09c2abb114092286d70299071d2a1994e62ee2f",
+      "in_scope": true
+    },
+    {
+      "path": "音频转文本/[22]--4.1 开题和中期答辩_原文.pdf",
+      "pages": 5,
+      "sha256": "fdd76bf8a5804c0897672a4bee69a293a98623fbe3b3956eed640cbf6fd6eacd",
+      "in_scope": false
+    },
+    {
+      "path": "音频转文本/[23]--4.2 预答辩和毕业答辩_原文.pdf",
+      "pages": 6,
+      "sha256": "8b7eacfb79b254609bacc1834f0b0dc6dfdeaba5974550a0b1df9104c534d1c2",
+      "in_scope": false
+    },
+    {
+      "path": "音频转文本/[2]--1.1 定毕业目标_原文.pdf",
+      "pages": 16,
+      "sha256": "dc54ce26c32398162baf531eb112c1249043b57855478164fa12dead32df283d",
+      "in_scope": false
+    },
+    {
+      "path": "音频转文本/[3]--1.2 定目标导师_原文.pdf",
+      "pages": 13,
+      "sha256": "e42a6538d6d4f7c8e55ad37b16048f5894c26c55207247ba896098c3518a1d2a",
+      "in_scope": false
+    },
+    {
+      "path": "音频转文本/[4]--1.3 定科研方向_原文.pdf",
+      "pages": 12,
+      "sha256": "7f99846ef2e85cb20a3d6e29162479b8a075ba16a5c4591523bbed956b1936f3",
+      "in_scope": false
+    },
+    {
+      "path": "音频转文本/[5]--1.4 定科研基础_原文.pdf",
+      "pages": 9,
+      "sha256": "709b6a10998873da283aa0b4adf15f3c8780603d7056a72506a5edcd2a047285",
+      "in_scope": false
+    },
+    {
+      "path": "音频转文本/[6]--1.5 定开题方向_原文.pdf",
+      "pages": 11,
+      "sha256": "222d86383192c2385a2061be715424bf80626045a2918c85ad519551a6a9a02d",
+      "in_scope": false
+    },
+    {
+      "path": "音频转文本/[7]--2.1 学术裁缝的本质_原文.pdf",
+      "pages": 13,
+      "sha256": "9dc1fdf9c599c053304cabdc675e83a1be28f4b5d48ffc34d64504f569640fc4",
+      "in_scope": true
+    },
+    {
+      "path": "音频转文本/[8]--2.2 如何阅读论文_原文.pdf",
+      "pages": 11,
+      "sha256": "3ffbae71cfc0aba56e6613110f1d7a7e7d2500ca2891c7763d52e7abccb8b445",
+      "in_scope": true
+    },
+    {
+      "path": "音频转文本/[9]--2.3 如何拆分论文_原文.pdf",
+      "pages": 13,
+      "sha256": "714b61dee76067538acb8b6ca8cffd060095f897f34147cdfdf44e2bc0d3474f",
+      "in_scope": true
+    }
+  ]
+}

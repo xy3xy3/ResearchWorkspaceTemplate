@@ -402,7 +402,7 @@ class ManuscriptTests(TemporaryCase):
 
 class ConfigurationTests(unittest.TestCase):
     def test_all_skills_carry_clear_language_policy(self):
-        files=list(SKILLS.glob('*/SKILL.md'));self.assertEqual(len(files),10)
+        files=list(SKILLS.glob('*/SKILL.md'));self.assertEqual(len(files),11)
         for file in files:
             text=file.read_text();self.assertIn('## Communication',text)
             self.assertIn('Chinese gloss',text);self.assertIn('uncertainty',text)

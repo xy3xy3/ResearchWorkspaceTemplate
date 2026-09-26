@@ -5,7 +5,7 @@ Codex 专用科研工作区。人类给方向和资源边界，主 Agent 用原�
 ## 仓库布局
 
 ```text
-.agents/skills/       10 个技能，脚本、参考协议和模板随包存放
+.agents/skills/       11 个技能，脚本、参考协议和模板随包存放
 .codex/agents/       8 个原生角色，含模型与推理强度
 research/            问题、idea、证据、实验收据、决策、报告
 task/active/        进行中任务（planned/running/blocked）
@@ -71,10 +71,11 @@ python3 .agents/skills/research-autopilot/scripts/checkpoint.py check N-<实际�
 | research-experiment | 本地实验、失败留痕、代码版本与配对分析 |
 | research-review | 原生独立审查、引用支持与收据结构审计 |
 | research-writing | 调研和阶段报告 |
+| research-academic-tailor | 学术裁缝：论文拆解、证据与贡献、章节写作、学位论文、图表语言和返修 |
 | research-latex | 独立论文仓库中的大纲、写作、修订、引用检查、编译 |
 | research-figures | 数据图、可编辑方法图、绘图源码与来源记录 |
 
-技能使用英文工作流程与必要中文说明；面向用户默认简洁中文，专有英文术语首次出现带中文释义。精简不删除证据或不确定性；英文论文、代码和 API 字段不插入聊天式括注。无需额外安装 caveman 或其他工作区。
+技能使用英文或中文工作流程与必要说明；面向用户默认简洁中文，专有英文术语首次出现带中文释义。精简不删除证据或不确定性；英文论文、代码和 API 字段不插入聊天式括注。无需额外安装 caveman 或其他工作区。
 
 ## 文献与本地资料
 
@@ -123,3 +124,15 @@ python3 -m compileall -q .agents tests
 测试中的 HTTP、MCP（模型上下文协议）、解析器和模型调度协议使用模拟，不等于真实在线服务、本地 GPU 解析、Codex 原生委派或 LaTeX 端到端验证。具体执行记录见 [本次验证](docs/validation-v2.md)。
 
 [架构](docs/architecture.md) · [Codex 兼容性](docs/codex-compatibility.md) · [迁移](docs/migration.md) · [本次上游参考与取舍](docs/upstream-v2.md) · [首版来源](docs/upstream-map.md)
+
+## 学术裁缝：单一论文写作入口
+
+[research-academic-tailor](.agents/skills/research-academic-tailor/SKILL.md) 把课件、音频转写与已有蒸馏结果整理成一个技能；11 份专题文档按任务加载，另附来源说明、原文件校验清单、3 份写作模板和人工行为评估场景。它负责把真实方法与证据写成论文，不是只给写作建议，也不包含选导师、导师关系、就业或毕业规划。
+
+```text
+$research-academic-tailor 结合当前文献、方法和已核验的实验材料，
+先梳理论文主线与贡献，再写引言和方法；缺失证据显式标记，
+不要补造结果。正式稿写入已登记的独立 paper_repo。
+```
+
+也可以直接要求修改摘要、规划学位论文章节、压缩篇幅或逐条回复审稿意见，不必重走完整流程。LaTeX 编译、检索和作图继续使用已有技能。原课程 PDF、截图和完整转写未提交；[来源与取舍](.agents/skills/research-academic-tailor/references/sources-and-decisions.md) 记录缺失转写、上游版本及改写边界。[本次验证](docs/validation-academic-tailor.md) 区分静态测试与尚未执行的模型行为评估。
